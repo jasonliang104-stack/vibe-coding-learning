@@ -1,0 +1,2280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>简历优化小程序交互原型</title>
+    <style>
+      :root {
+        --bg: #eef2f6;
+        --phone-bg: #f5f7fa;
+        --card: #ffffff;
+        --card-soft: #f7f9fc;
+        --text: #1f2329;
+        --subtext: #6b7280;
+        --line: #e6ebf2;
+        --blue: #1677ff;
+        --blue-soft: #edf4ff;
+        --green: #12b886;
+        --green-soft: #ebfbf6;
+        --orange: #ff7d00;
+        --orange-soft: #fff4e8;
+        --red: #e5484d;
+        --red-soft: #fff1f1;
+        --shadow: 0 10px 30px rgba(31, 35, 41, 0.08);
+        --radius-xl: 22px;
+        --radius-lg: 18px;
+        --radius-md: 14px;
+        --radius-sm: 10px;
+        --font: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(180deg, #f4f6f8 0%, #edf1f5 100%);
+        color: var(--text);
+        font-family: var(--font);
+      }
+
+      .prototype {
+        display: grid;
+        gap: 18px;
+        justify-items: center;
+        padding: 24px 16px 40px;
+      }
+
+      .prototype-note {
+        width: min(420px, calc(100vw - 32px));
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        border-radius: 16px;
+        padding: 12px 14px;
+        box-shadow: var(--shadow);
+      }
+
+      .prototype-note strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 13px;
+      }
+
+      .prototype-note span {
+        display: block;
+        color: var(--subtext);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .phone {
+        width: 402px;
+        height: 860px;
+        background: #111315;
+        border-radius: 38px;
+        padding: 12px;
+        box-shadow: 0 30px 60px rgba(17, 19, 21, 0.22);
+      }
+
+      .phone-shell {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: var(--phone-bg);
+        border-radius: 28px;
+        overflow: hidden;
+      }
+
+      .phone-shell::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 144px;
+        height: 28px;
+        background: #111315;
+        border-radius: 0 0 18px 18px;
+        z-index: 30;
+      }
+
+      .screen {
+        display: none;
+        position: relative;
+        height: 100%;
+        padding: 46px 16px 92px;
+        overflow-y: auto;
+        background: var(--phone-bg);
+      }
+
+      .screen.active {
+        display: block;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+
+      .topbar h1 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+      }
+
+      .icon-btn,
+      .text-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        background: transparent;
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+
+      .icon-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        font-size: 16px;
+      }
+
+      .text-btn {
+        color: var(--blue);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .hero {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-xl);
+        padding: 18px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: var(--blue-soft);
+        color: var(--blue);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .hero h2 {
+        margin: 12px 0 10px;
+        font-size: 28px;
+        line-height: 1.2;
+      }
+
+      .hero p {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.7;
+        color: var(--subtext);
+      }
+
+      .card {
+        margin-top: 12px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .card-header h3 {
+        margin: 0;
+        font-size: 16px;
+      }
+
+      .card-sub {
+        margin: -4px 0 12px;
+        color: var(--subtext);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .hint {
+        color: var(--subtext);
+        font-size: 12px;
+      }
+
+      .notice {
+        margin-top: 12px;
+        padding: 12px 14px;
+        border-radius: var(--radius-md);
+        background: var(--blue-soft);
+        color: var(--text);
+      }
+
+      .notice strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 13px;
+      }
+
+      .notice p {
+        margin: 0;
+        color: var(--subtext);
+        font-size: 12px;
+        line-height: 1.7;
+      }
+
+      .primary-btn,
+      .secondary-btn {
+        width: 100%;
+        border: 0;
+        border-radius: 14px;
+        padding: 14px 16px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .primary-btn {
+        color: #fff;
+        background: var(--blue);
+        box-shadow: 0 10px 20px rgba(22, 119, 255, 0.22);
+      }
+
+      .secondary-btn {
+        color: var(--text);
+        background: #f3f5f7;
+        border: 1px solid var(--line);
+      }
+
+      .ghost-btn {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: var(--blue);
+        font-size: 13px;
+        font-weight: 700;
+        padding: 6px 0;
+        cursor: pointer;
+      }
+
+      .sticky-actions {
+        position: sticky;
+        bottom: 0;
+        margin-top: 16px;
+        padding-top: 10px;
+        background: linear-gradient(180deg, rgba(245, 247, 250, 0), rgba(245, 247, 250, 0.96) 30%);
+        display: grid;
+        gap: 10px;
+      }
+
+      .record {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding: 12px;
+        border-radius: 14px;
+        background: var(--card-soft);
+        border: 1px solid var(--line);
+      }
+
+      .record + .record {
+        margin-top: 10px;
+      }
+
+      .thumb {
+        flex: 0 0 auto;
+        width: 64px;
+        height: 84px;
+        border-radius: 12px;
+        border: 1px solid #dce4ef;
+        background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .thumb::before,
+      .thumb::after {
+        content: "";
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(31, 35, 41, 0.14);
+      }
+
+      .thumb::before {
+        top: 18px;
+      }
+
+      .thumb::after {
+        top: 30px;
+        right: 24px;
+      }
+
+      .record-main {
+        min-width: 0;
+        flex: 1;
+      }
+
+      .record-main strong {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 6px;
+      }
+
+      .record-main p {
+        margin: 0;
+        color: var(--subtext);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .tag.blue {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .tag.green {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .tag.orange {
+        background: var(--orange-soft);
+        color: var(--orange);
+      }
+
+      .tag.red {
+        background: var(--red-soft);
+        color: var(--red);
+      }
+
+      .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .quick-item {
+        padding: 14px;
+        border-radius: 14px;
+        background: var(--card-soft);
+        border: 1px solid var(--line);
+      }
+
+      .quick-item strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 14px;
+      }
+
+      .quick-item span {
+        display: block;
+        color: var(--subtext);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .field {
+        margin-bottom: 12px;
+      }
+
+      .field:last-child {
+        margin-bottom: 0;
+      }
+
+      .field label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .input,
+      .textarea,
+      .muted-box,
+      .picker-row {
+        width: 100%;
+        background: var(--card-soft);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 13px 14px;
+        font-size: 13px;
+        color: var(--subtext);
+        line-height: 1.7;
+      }
+
+      .textarea {
+        min-height: 92px;
+      }
+
+      .picker-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        font-size: 12px;
+        color: var(--text);
+      }
+
+      .stepper {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .step {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+      }
+
+      .step i {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        display: inline-grid;
+        place-items: center;
+        font-style: normal;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--blue);
+        background: var(--blue-soft);
+      }
+
+      .step strong {
+        display: block;
+        font-size: 12px;
+        margin-bottom: 2px;
+      }
+
+      .step span {
+        display: block;
+        font-size: 11px;
+        color: var(--subtext);
+      }
+
+      .step.active {
+        background: #f7fbff;
+        border-color: #d6e7ff;
+      }
+
+      .metric-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .metric-card {
+        padding: 14px;
+        border-radius: 14px;
+        background: var(--card);
+        border: 1px solid var(--line);
+      }
+
+      .metric-card b {
+        display: block;
+        font-size: 22px;
+        margin-bottom: 6px;
+      }
+
+      .metric-card span {
+        display: block;
+        color: var(--subtext);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .progress-item {
+        padding: 14px;
+        border-radius: 14px;
+        background: var(--card-soft);
+        border: 1px solid var(--line);
+      }
+
+      .progress-item + .progress-item {
+        margin-top: 10px;
+      }
+
+      .progress-item strong {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 6px;
+      }
+
+      .progress-item span {
+        display: block;
+        color: var(--subtext);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .bar {
+        margin-top: 10px;
+        height: 6px;
+        border-radius: 999px;
+        background: #ebeff5;
+        overflow: hidden;
+      }
+
+      .bar i {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+        background: var(--blue);
+      }
+
+      .segmented,
+      .segmented-3 {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .segmented {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .segmented-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .segmented button,
+      .segmented-3 button {
+        border: 0;
+        padding: 11px 10px;
+        border-radius: 12px;
+        background: #f2f4f7;
+        color: var(--subtext);
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .segmented button.active,
+      .segmented-3 button.active {
+        color: #fff;
+        background: var(--blue);
+      }
+
+      .tab-panel {
+        display: none;
+      }
+
+      .tab-panel.active {
+        display: block;
+      }
+
+      .doc-preview {
+        margin-top: 12px;
+        padding: 14px;
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        background: var(--card);
+      }
+
+      .doc-sheet {
+        padding: 16px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: #fff;
+      }
+
+      .doc-title {
+        width: 56%;
+        height: 12px;
+        border-radius: 999px;
+        background: rgba(31, 35, 41, 0.75);
+        margin-bottom: 18px;
+      }
+
+      .doc-line {
+        height: 7px;
+        border-radius: 999px;
+        background: rgba(31, 35, 41, 0.14);
+        margin-bottom: 10px;
+      }
+
+      .doc-line.mid {
+        width: 72%;
+      }
+
+      .doc-line.short {
+        width: 48%;
+      }
+
+      .meta-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .meta-card {
+        padding: 14px;
+        border-radius: 14px;
+        background: var(--card-soft);
+        border: 1px solid var(--line);
+      }
+
+      .meta-card b {
+        display: block;
+        font-size: 18px;
+        margin-bottom: 6px;
+      }
+
+      .meta-card span {
+        display: block;
+        color: var(--subtext);
+        font-size: 12px;
+      }
+
+      .horizontal-cards {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+
+      .mini-doc {
+        min-width: 150px;
+        padding: 12px;
+        border-radius: 14px;
+        background: var(--card-soft);
+        border: 1px solid var(--line);
+      }
+
+      .mini-doc strong {
+        display: block;
+        margin: 10px 0 6px;
+        font-size: 13px;
+      }
+
+      .mini-doc span {
+        display: block;
+        color: var(--subtext);
+        font-size: 11px;
+        line-height: 1.6;
+      }
+
+      .list-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .list-row:last-child {
+        border-bottom: 0;
+      }
+
+      .list-row strong {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+
+      .list-row span {
+        display: block;
+        color: var(--subtext);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .stat {
+        padding: 12px;
+        border-radius: 14px;
+        background: var(--card-soft);
+        border: 1px solid var(--line);
+        text-align: center;
+      }
+
+      .stat strong {
+        display: block;
+        font-size: 20px;
+        margin-bottom: 4px;
+      }
+
+      .stat span {
+        display: block;
+        color: var(--subtext);
+        font-size: 12px;
+      }
+
+      .member-card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-xl);
+        padding: 16px;
+      }
+
+      .member-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .member-user {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4096ff, #8ec5ff);
+      }
+
+      .sheet-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .sheet-item {
+        padding: 14px;
+        border-radius: 14px;
+        background: var(--card-soft);
+        border: 1px solid var(--line);
+      }
+
+      .sheet-item strong {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 6px;
+      }
+
+      .sheet-item span {
+        display: block;
+        color: var(--subtext);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .bottom-nav {
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.98);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: 0 10px 24px rgba(31, 35, 41, 0.06);
+      }
+
+      .nav-tab {
+        border: 0;
+        background: transparent;
+        border-radius: 12px;
+        padding: 8px 6px;
+        font-size: 12px;
+        color: var(--subtext);
+        cursor: pointer;
+      }
+
+      .nav-tab.active {
+        background: var(--blue-soft);
+        color: var(--blue);
+        font-weight: 700;
+      }
+
+      .two-actions,
+      .three-actions {
+        display: grid;
+        gap: 10px;
+      }
+
+      .two-actions {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .three-actions {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .case-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .case-item {
+        padding: 12px;
+        border-radius: 14px;
+        background: var(--card-soft);
+        border: 1px solid var(--line);
+      }
+
+      .case-item strong {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 8px;
+      }
+
+      .case-item span {
+        display: block;
+        color: var(--subtext);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .modal-screen {
+        background: rgba(15, 23, 42, 0.28);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 46px 16px 92px;
+      }
+
+      .modal-screen.active {
+        display: flex;
+      }
+
+      .modal-card {
+        width: 100%;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 18px;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16);
+      }
+
+      .modal-card h2 {
+        margin: 10px 0 8px;
+        font-size: 22px;
+        line-height: 1.25;
+      }
+
+      .modal-card p {
+        margin: 0;
+        color: var(--subtext);
+        font-size: 13px;
+        line-height: 1.7;
+      }
+
+      @media (max-width: 430px) {
+        .prototype {
+          width: 100%;
+          padding: 0;
+          gap: 0;
+        }
+
+        .prototype-note {
+          display: none;
+        }
+
+        .phone {
+          width: 100vw;
+          height: 100vh;
+          border-radius: 0;
+          padding: 0;
+          box-shadow: none;
+        }
+
+        .phone-shell {
+          border-radius: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="prototype">
+      <div class="prototype-note">
+        <strong>交互原型 V2</strong>
+        <span>这版不再是页面陈列板，而是按真实小程序路径重构的可点击流程。核心目标是让“发起任务、看报告、补信息、确认结果、导出”这条主链路成立。</span>
+      </div>
+
+      <div class="phone">
+        <div class="phone-shell">
+          <section class="screen active" id="screen-home">
+            <div class="topbar">
+              <button class="icon-btn">⌂</button>
+              <h1>简历优化助手</h1>
+              <button class="text-btn" data-go="list">历史记录</button>
+            </div>
+
+            <div class="hero">
+              <span class="eyebrow">针对具体岗位 JD 做定向优化</span>
+              <h2>先诊断差距，再生成更适合投递的简历</h2>
+              <p>上传岗位 JD 和简历，系统会先解读岗位要求，再给出诊断报告，必要时向你补充取证，最后生成优化后的简历。</p>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>开始优化</h3>
+                <span class="hint">支持新上传或继续使用已有简历</span>
+              </div>
+              <div class="muted-box">
+                新任务默认上传新的岗位 JD 和简历。如果你已有原始简历或历史优化简历，也可以在下一步直接选择使用。
+              </div>
+              <div class="sticky-actions" style="position: static; padding-top: 12px; background: none;">
+                <button class="primary-btn" data-go="submit">开始优化简历</button>
+                <button class="ghost-btn" data-go="submit">使用已保存简历继续优化</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>最近优化记录</h3>
+                <button class="text-btn" data-go="list">更多</button>
+              </div>
+              <button class="record" data-go="detail">
+                <div class="thumb"></div>
+                <div class="record-main">
+                  <strong>高级产品经理</strong>
+                  <p>2026.04.20 · 优化前 61 分 → 优化后 83 分</p>
+                  <span class="tag blue">建议优化后投递 → 可投递</span>
+                </div>
+              </button>
+              <button class="record" data-go="detail">
+                <div class="thumb"></div>
+                <div class="record-main">
+                  <strong>增长产品负责人</strong>
+                  <p>2026.04.19 · 优化前 58 分 → 优化后 79 分</p>
+                  <span class="tag orange">匹配风险较高 → 建议优化后投递</span>
+                </div>
+              </button>
+              <button class="record" data-go="detail">
+                <div class="thumb"></div>
+                <div class="record-main">
+                  <strong>商业化产品经理</strong>
+                  <p>2026.04.17 · 优化前 67 分 → 优化后 81 分</p>
+                  <span class="tag green">建议优化后投递 → 可投递</span>
+                </div>
+              </button>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>优化案例</h3>
+                <span class="hint">列表展示，最多 5 个</span>
+              </div>
+              <div class="case-list">
+                <div class="case-item">
+                  <strong>高级产品经理</strong>
+                  <div class="split">
+                    <div class="thumb" style="width:100%; height:88px;"></div>
+                    <div class="thumb" style="width:100%; height:88px;"></div>
+                  </div>
+                  <span>优化前 61 分 → 优化后 83 分，补足业务结果与协同范围。</span>
+                </div>
+                <div class="case-item">
+                  <strong>增长产品负责人</strong>
+                  <div class="split">
+                    <div class="thumb" style="width:100%; height:88px;"></div>
+                    <div class="thumb" style="width:100%; height:88px;"></div>
+                  </div>
+                  <span>优化前 58 分 → 优化后 79 分，强化增长指标和项目主导程度。</span>
+                </div>
+                <div class="case-item">
+                  <strong>商业化产品经理</strong>
+                  <div class="split">
+                    <div class="thumb" style="width:100%; height:88px;"></div>
+                    <div class="thumb" style="width:100%; height:88px;"></div>
+                  </div>
+                  <span>优化前 67 分 → 优化后 81 分，补足商业化策略和落地成果。</span>
+                </div>
+                <div class="case-item">
+                  <strong>用户增长经理</strong>
+                  <div class="split">
+                    <div class="thumb" style="width:100%; height:88px;"></div>
+                    <div class="thumb" style="width:100%; height:88px;"></div>
+                  </div>
+                  <span>优化前 55 分 → 优化后 76 分，增加实验复盘与增长指标数据。</span>
+                </div>
+                <div class="case-item">
+                  <strong>ToB 产品经理</strong>
+                  <div class="split">
+                    <div class="thumb" style="width:100%; height:88px;"></div>
+                    <div class="thumb" style="width:100%; height:88px;"></div>
+                  </div>
+                  <span>优化前 63 分 → 优化后 80 分，突出客户需求理解与项目推进能力。</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="bottom-nav">
+              <button class="nav-tab active" data-go="home">首页</button>
+              <button class="nav-tab" data-go="list">简历列表</button>
+              <button class="nav-tab" data-go="profile">我的</button>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-submit">
+            <div class="topbar">
+              <button class="icon-btn" data-go="home">‹</button>
+              <h1>新建优化任务</h1>
+              <button class="text-btn">模型说明</button>
+            </div>
+
+            <div class="stepper">
+              <div class="step active">
+                <i>1</i>
+                <div>
+                  <strong>提交材料</strong>
+                  <span>JD + 简历</span>
+                </div>
+              </div>
+              <div class="step">
+                <i>2</i>
+                <div>
+                  <strong>查看报告</strong>
+                  <span>决定下一步</span>
+                </div>
+              </div>
+              <div class="step">
+                <i>3</i>
+                <div>
+                  <strong>确认结果</strong>
+                  <span>再决定导出</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="notice">
+              <strong>系统推荐模型：GPT 5.4</strong>
+              <p>特点：分析更深入，适合复杂岗位 JD。预计消耗 180 积分，也可以切换到更省积分的国产模型。</p>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>1. 提交岗位 JD</h3>
+                <span class="hint">先提交岗位信息</span>
+              </div>
+              <div class="field">
+                <label>岗位 JD</label>
+                <div class="textarea">支持文本粘贴或上传岗位截图，二选一即可。上传截图后，系统会先从截图中提取 JD 文字，再进入后续分析。第一版不支持招聘链接解析。</div>
+              </div>
+              <div class="field">
+                <label>导入方式</label>
+                <div class="picker-row">
+                  <span class="pill">粘贴文本</span>
+                  <span class="pill">上传 JD 截图</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>2. 选择或导入简历</h3>
+                <span class="hint">单次只允许 1 份简历</span>
+              </div>
+              <div class="quick-grid">
+                <div class="quick-item">
+                  <strong>方式一：上传新的简历</strong>
+                  <span>支持上传 Word，或直接粘贴简历文本。</span>
+                </div>
+                <div class="quick-item">
+                  <strong>方式二：从现有简历中选择</strong>
+                  <span>可从已保存的原始简历或历史优化简历中选择 1 份继续优化。</span>
+                </div>
+              </div>
+              <div class="field" style="margin-top: 12px;">
+                <label>上传新的简历</label>
+                <div class="picker-row">
+                  <span class="pill">上传 Word</span>
+                  <span class="pill">粘贴文本</span>
+                </div>
+              </div>
+              <div class="field">
+                <label>从现有简历中选择</label>
+                <div class="sheet-list">
+                  <div class="sheet-item">
+                    <strong>原始简历</strong>
+                    <span>产品经理原始版.docx</span>
+                    <span>增长方向原始版.txt</span>
+                  </div>
+                  <div class="sheet-item">
+                    <strong>优化后的简历</strong>
+                    <span>高级产品经理_优化版.docx</span>
+                    <span>增长产品负责人_优化版.docx</span>
+                  </div>
+                </div>
+              </div>
+              <div class="muted-box">
+                原始简历最多保存 5 份。从现有简历中选择时，原始简历排在前面，优化后的简历排在后面。简历输入仅支持文本和 Word，不支持 PDF，也不支持简历图片解析。
+              </div>
+              <div class="field" style="margin-top: 12px;">
+                <label>当前选择</label>
+                <div class="input">岗位 JD：已上传截图 1 张 ｜ 简历：产品经理_原始版.docx</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>3. 确认模型与扣费规则</h3>
+                <span class="hint">开始诊断即扣费</span>
+              </div>
+              <div class="quick-grid">
+                <div class="quick-item">
+                  <strong>当前模型</strong>
+                  <span>GPT 5.4 · 深度分析 · 180 积分</span>
+                </div>
+                <div class="quick-item">
+                  <strong>可切换模型</strong>
+                  <span>QWQ / DeepSeek · 中文更稳 · 120 积分</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="sticky-actions">
+              <button class="ghost-btn" data-go="points-shortage">查看积分不足处理</button>
+              <button class="secondary-btn">切换模型</button>
+              <button class="primary-btn" data-go="loading">开始诊断</button>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-loading">
+            <div class="topbar">
+              <button class="icon-btn" data-go="submit">‹</button>
+              <h1>诊断中</h1>
+              <button class="text-btn">已扣除积分</button>
+            </div>
+
+            <div class="hero">
+              <span class="eyebrow">正在处理中</span>
+              <h2>简历诊断中，请稍候</h2>
+              <p>系统正在完成岗位 JD 解析、岗位要求解读、简历诊断与诊断报告生成。本次任务处理完成后，将自动进入诊断报告页。</p>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>当前进度</h3>
+                <span class="hint">实时状态</span>
+              </div>
+              <div class="progress-item">
+                <strong>岗位 JD 解析中</strong>
+                <span>正在从截图或文本中提取并结构化岗位信息</span>
+                <div class="bar"><i style="width: 92%;"></i></div>
+              </div>
+              <div class="progress-item">
+                <strong>岗位要求解读中</strong>
+                <span>正在识别岗位职责、核心能力、专业技能和隐性要求</span>
+                <div class="bar"><i style="width: 68%;"></i></div>
+              </div>
+              <div class="progress-item">
+                <strong>简历诊断中</strong>
+                <span>正在对照当前简历，判断已体现、部分体现和未体现的要求</span>
+                <div class="bar"><i style="width: 56%;"></i></div>
+              </div>
+              <div class="progress-item">
+                <strong>诊断报告生成中</strong>
+                <span>正在生成匹配分、优化建议、补充信息项和后续优化方案</span>
+                <div class="bar"><i style="width: 44%;"></i></div>
+              </div>
+              <div class="notice">
+                <strong>处理中说明</strong>
+                <p>该页面用于展示诊断过程中的过渡状态，实际产品中处理完成后将自动跳转到诊断报告页。</p>
+              </div>
+            </div>
+
+            <div class="sticky-actions">
+              <button class="primary-btn" data-go="report">演示：查看诊断报告</button>
+            </div>
+          </section>
+
+          <section class="screen modal-screen" id="screen-points-shortage">
+            <div class="modal-card">
+              <span class="eyebrow">积分不足</span>
+              <h2>当前积分不足，无法开始诊断</h2>
+              <p>本次预计消耗 180 积分，你当前仅剩 60 积分，还差 120 积分。你可以直接充值，也可以先通过观看视频广告领取积分。</p>
+
+              <div class="card" style="margin-top: 14px; margin-bottom: 0;">
+                <div class="card-header">
+                  <h3>补充积分方式</h3>
+                  <span class="hint">二选一</span>
+                </div>
+                <div class="two-actions">
+                  <button class="secondary-btn" data-go="billing">立即充值</button>
+                  <button class="primary-btn" data-go="video-reward">观看视频领积分</button>
+                </div>
+                <div class="notice">
+                  <strong>视频奖励说明</strong>
+                  <p>点击后立即开始播放激励视频。完整观看后发放对应积分，积分额度由后台配置。</p>
+                </div>
+              </div>
+
+              <div class="sticky-actions" style="position: static; background: none; padding-top: 14px;">
+                <button class="ghost-btn" data-go="submit">返回上一页</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="screen modal-screen" id="screen-video-reward">
+            <div class="modal-card">
+              <span class="eyebrow">激励视频</span>
+              <h2>视频播放完成，可领取积分</h2>
+              <p>本次观看已完成，可获得 20 积分。积分到账后，你可以返回继续发起优化任务。</p>
+
+              <div class="card" style="margin-top: 14px; margin-bottom: 0;">
+                <div class="card-header">
+                  <h3>奖励结果</h3>
+                  <span class="hint">示意流程</span>
+                </div>
+                <div class="meta-grid">
+                  <div class="meta-card">
+                    <b>+20</b>
+                    <span>本次视频奖励积分</span>
+                  </div>
+                  <div class="meta-card">
+                    <b>80</b>
+                    <span>当前积分余额</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="sticky-actions" style="position: static; background: none; padding-top: 14px;">
+                <button class="secondary-btn" data-go="billing">继续充值</button>
+                <button class="primary-btn" data-go="submit">领取积分并返回</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-report">
+            <div class="topbar">
+              <button class="icon-btn" data-go="loading">‹</button>
+              <h1>诊断报告</h1>
+              <button class="text-btn">换模型</button>
+            </div>
+
+            <div class="stepper">
+              <div class="step">
+                <i>1</i>
+                <div>
+                  <strong>提交材料</strong>
+                  <span>已完成</span>
+                </div>
+              </div>
+              <div class="step active">
+                <i>2</i>
+                <div>
+                  <strong>查看报告</strong>
+                  <span>决定下一步</span>
+                </div>
+              </div>
+              <div class="step">
+                <i>3</i>
+                <div>
+                  <strong>生成简历</strong>
+                  <span>确认内容</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="hero">
+              <span class="eyebrow">高级产品经理 · 匹配结论</span>
+              <h2>72 分 · 建议优化后投递</h2>
+              <p>项目成果表达偏弱，管理经验和商业结果尚未被招聘方快速读到，当前还不够像“这个岗位的人”。</p>
+            </div>
+
+            <div class="notice">
+              <strong>建议动作：先补充信息，再生成优化版</strong>
+              <p>当前简历最缺的是量化结果、跨部门协同范围和职责边界。如果你嫌麻烦，也可以跳过补充，直接生成优化版。</p>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>岗位 JD 解读</h3>
+                <span class="hint">逐项对照</span>
+              </div>
+              <div class="record">
+                <div class="record-main">
+                  <strong>岗位职责：负责跨部门推进核心项目</strong>
+                  <p>当前简历：部分体现但不足</p>
+                  <span class="tag orange">建议补充项目协同范围与推进结果</span>
+                </div>
+              </div>
+              <div class="record">
+                <div class="record-main">
+                  <strong>核心能力：具备数据驱动和业务增长意识</strong>
+                  <p>当前简历：未体现</p>
+                  <span class="tag red">需要补充量化成果数据</span>
+                </div>
+              </div>
+              <div class="record">
+                <div class="record-main">
+                  <strong>专业技能：用户增长、策略设计、指标分析</strong>
+                  <p>当前简历：已体现</p>
+                  <span class="tag blue">建议把关键词前置，提升 ATS 识别率</span>
+                </div>
+              </div>
+              <div class="record">
+                <div class="record-main">
+                  <strong>隐性要求：业务理解强、能独立推进复杂项目</strong>
+                  <p>当前简历：部分体现但不足</p>
+                  <span class="tag orange">建议强化项目主导程度和影响范围</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>简历优化建议</h3>
+                <span class="hint">Top 4</span>
+              </div>
+              <div class="list-row">
+                <div>
+                  <strong>1. 强化项目结果表达</strong>
+                  <span>用 GMV、转化率、效率提升等结果替代泛描述</span>
+                </div>
+              </div>
+              <div class="list-row">
+                <div>
+                  <strong>2. 补足管理与协同信息</strong>
+                  <span>明确带过哪些角色、推动过哪些资源</span>
+                </div>
+              </div>
+              <div class="list-row">
+                <div>
+                  <strong>3. 对齐岗位关键词</strong>
+                  <span>把策略、增长、用户分层等关键词前置</span>
+                </div>
+              </div>
+              <div class="list-row">
+                <div>
+                  <strong>4. 调整单段经历内部顺序</strong>
+                  <span>优先展示与目标岗位最相关的项目与职责，不跨公司挪动内容</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>需补充的信息</h3>
+                <span class="hint">按需触发</span>
+              </div>
+              <div class="muted-box">
+                当前建议补充：1）核心增长项目的量化结果；2）跨部门协作对象和推动范围；3）你在项目中的职责边界；4）是否有团队管理经历。
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>补充你的要求</h3>
+                <span class="hint">自由输入 + 快捷选项</span>
+              </div>
+              <div class="field">
+                <div class="picker-row">
+                  <span class="pill">突出管理经验</span>
+                  <span class="pill">更贴近岗位关键词</span>
+                  <span class="pill">强化项目成果</span>
+                </div>
+              </div>
+              <div class="field">
+                <div class="textarea">例如：希望更突出 ToB 项目经验，弱化偏执行的经历。</div>
+              </div>
+            </div>
+
+            <div class="sticky-actions">
+              <button class="secondary-btn" data-go="optimizing">跳过补充，直接优化</button>
+              <button class="primary-btn" data-go="collect">去补充缺失信息</button>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-collect">
+            <div class="topbar">
+              <button class="icon-btn" data-go="report">‹</button>
+              <h1>补充信息</h1>
+              <button class="text-btn">按列表填写</button>
+            </div>
+
+            <div class="notice">
+              <strong>请按问题清单补充关键信息</strong>
+              <p>这里仅收集岗位强相关、但简历中没有写清楚的真实信息。回答越具体，最终优化结果越好。你也可以跳过这一步，系统会直接基于现有内容生成。</p>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>问题清单</h3>
+                <span class="hint">一次性填写</span>
+              </div>
+              <div class="field">
+                <label>1. 核心项目最终结果是多少？</label>
+                <div class="input">例如：3 个月内付费转化率提升 18%</div>
+              </div>
+              <div class="field">
+                <label>2. 你主导了哪些关键决策？</label>
+                <div class="input">例如：负责策略制定、目标拆解、实验节奏设计</div>
+              </div>
+              <div class="field">
+                <label>3. 你协调了哪些团队或资源？</label>
+                <div class="input">例如：协同研发、设计、运营、销售等团队推进项目</div>
+              </div>
+              <div class="field">
+                <label>4. 是否带过团队，人数和角色分别是什么？</label>
+                <div class="input">例如：带 6 人团队，含产品、运营和数据分析角色</div>
+              </div>
+            </div>
+
+            <div class="sticky-actions">
+              <button class="secondary-btn" data-go="optimizing">跳过，直接开始优化</button>
+              <button class="primary-btn" data-go="optimizing">提交并开始优化</button>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-optimizing">
+            <div class="topbar">
+              <button class="icon-btn" data-go="report">‹</button>
+              <h1>优化中</h1>
+              <button class="text-btn">处理中</button>
+            </div>
+
+            <div class="hero">
+              <span class="eyebrow">正在生成</span>
+              <h2>简历优化中，请稍候</h2>
+              <p>系统正在根据岗位 JD、诊断结论、你的补充信息和优化要求，生成更贴合目标岗位的优化版简历。完成后将自动进入结果确认页。</p>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>当前进度</h3>
+                <span class="hint">实时状态</span>
+              </div>
+              <div class="progress-item">
+                <strong>用户补充信息整理中</strong>
+                <span>正在整理你补充的事实、数据、职责边界与优化要求</span>
+                <div class="bar"><i style="width: 90%;"></i></div>
+              </div>
+              <div class="progress-item">
+                <strong>简历结构优化中</strong>
+                <span>正在按岗位要求重排单段经历内部的信息优先级</span>
+                <div class="bar"><i style="width: 72%;"></i></div>
+              </div>
+              <div class="progress-item">
+                <strong>经历表达优化中</strong>
+                <span>正在强化结果表达、岗位关键词和 ATS 可识别度</span>
+                <div class="bar"><i style="width: 56%;"></i></div>
+              </div>
+              <div class="progress-item">
+                <strong>优化版简历生成中</strong>
+                <span>正在生成优化后的简历内容与预览版本</span>
+                <div class="bar"><i style="width: 38%;"></i></div>
+              </div>
+              <div class="notice">
+                <strong>处理中说明</strong>
+                <p>该页面用于展示简历优化过程中的过渡状态，实际产品中处理完成后将自动跳转到优化结果确认页。</p>
+              </div>
+            </div>
+
+            <div class="sticky-actions">
+              <button class="primary-btn" data-go="preview">演示：查看优化结果</button>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-preview">
+            <div class="topbar">
+              <button class="icon-btn" data-go="optimizing">‹</button>
+              <h1>确认优化结果</h1>
+              <button class="text-btn">更换模型重跑</button>
+            </div>
+
+            <div class="stepper">
+              <div class="step">
+                <i>1</i>
+                <div>
+                  <strong>提交材料</strong>
+                  <span>已完成</span>
+                </div>
+              </div>
+              <div class="step">
+                <i>2</i>
+                <div>
+                  <strong>诊断分析</strong>
+                  <span>已完成</span>
+                </div>
+              </div>
+              <div class="step active">
+                <i>3</i>
+                <div>
+                  <strong>确认结果</strong>
+                  <span>决定是否对齐</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="segmented" data-tabs="preview-mode">
+              <button class="active" data-tab-target="preview-full">完整预览</button>
+              <button data-tab-target="preview-diff">差异对比</button>
+            </div>
+
+            <div class="tab-panel active" id="preview-full">
+              <div class="doc-preview">
+                <div class="doc-sheet">
+                  <div class="doc-title"></div>
+                  <div class="doc-line"></div>
+                  <div class="doc-line mid"></div>
+                  <div class="doc-line short"></div>
+                  <div class="doc-line"></div>
+                  <div class="doc-line"></div>
+                  <div class="doc-line mid"></div>
+                  <div class="doc-line"></div>
+                  <div class="doc-line short"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-panel" id="preview-diff">
+              <div class="card">
+                <div class="card-header">
+                  <h3>重点差异对比</h3>
+                  <span class="hint">按模块查看</span>
+                </div>
+                <div class="list-row">
+                  <div>
+                    <strong>工作经历</strong>
+                    <span>强化了跨部门协同职责与业务结果表达</span>
+                  </div>
+                </div>
+                <div class="list-row">
+                  <div>
+                    <strong>项目经历</strong>
+                    <span>补入增长项目量化数据与职责边界</span>
+                  </div>
+                </div>
+                <div class="list-row">
+                  <div>
+                    <strong>技能总结</strong>
+                    <span>新增岗位相关关键词，提升 ATS 匹配度</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>重新生成说明</h3>
+                <span class="hint">涉及再次扣分</span>
+              </div>
+              <div class="muted-box">
+                如果你现在补充新的信息，或新增新的优化要求后重新生成，将再次扣除对应积分。更换模型重跑也会重新扣分。
+              </div>
+            </div>
+
+            <div class="sticky-actions">
+              <button class="secondary-btn" data-go="resume-view">内容确认无误，直接导出</button>
+              <button class="primary-btn" data-go="format">内容确认无误，去做格式对齐</button>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-format">
+            <div class="topbar">
+              <button class="icon-btn" data-go="preview">‹</button>
+              <h1>格式对齐</h1>
+              <button class="text-btn">可选步骤</button>
+            </div>
+
+            <div class="hero">
+              <span class="eyebrow">内容确认后再处理版式</span>
+              <h2>尽可能高度还原原简历格式</h2>
+              <p>这一步不重新设计简历，只对齐原有版式风格。由于本版本仅支持文本和 Word 输入，格式对齐以原始 Word 版式为主要参考。</p>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>格式对齐说明</h3>
+                <span class="hint">不额外扣分</span>
+              </div>
+              <div class="split">
+                <div class="mini-doc">
+                  <div class="thumb" style="width:100%; height:96px;"></div>
+                  <strong>原简历格式</strong>
+                  <span>参考原始 Word 的标题层级、间距、项目符号和结构。</span>
+                </div>
+                <div class="mini-doc">
+                  <div class="thumb" style="width:100%; height:96px;"></div>
+                  <strong>对齐后版本</strong>
+                  <span>在不改变内容真实性的前提下，尽量贴近原有排版观感。</span>
+                </div>
+              </div>
+              <div class="notice">
+                <strong>当前规则</strong>
+                <p>格式对齐包含在本次任务积分中，不单独收费。若你对当前版本已经满意，也可以直接导出，不必继续对齐。</p>
+              </div>
+            </div>
+
+            <div class="sticky-actions">
+              <button class="secondary-btn" data-go="resume-view">保持当前版本，直接导出</button>
+              <button class="primary-btn" data-go="resume-view">开始格式对齐</button>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-list">
+            <div class="topbar">
+              <button class="icon-btn" data-go="home">‹</button>
+              <h1>简历列表</h1>
+              <button class="text-btn">搜索</button>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>原始简历</h3>
+                <span class="hint">最多 5 份</span>
+              </div>
+              <div class="horizontal-cards">
+                <button class="mini-doc" data-go="original-view">
+                  <div class="thumb" style="width:100%; height:96px;"></div>
+                  <strong>产品经理原始版</strong>
+                  <span>上传时间：2026.04.10</span>
+                  <span>格式：Word</span>
+                  <span class="text-btn" style="justify-content:flex-start; padding:0; margin-top:6px;">删除</span>
+                </button>
+                <button class="mini-doc" data-go="original-view">
+                  <div class="thumb" style="width:100%; height:96px;"></div>
+                  <strong>增长方向简历</strong>
+                  <span>上传时间：2026.04.08</span>
+                  <span>格式：文本</span>
+                  <span class="text-btn" style="justify-content:flex-start; padding:0; margin-top:6px;">删除</span>
+                </button>
+                <button class="mini-doc" data-go="original-view">
+                  <div class="thumb" style="width:100%; height:96px;"></div>
+                  <strong>商业化原始版</strong>
+                  <span>上传时间：2026.04.01</span>
+                  <span>格式：Word</span>
+                  <span class="text-btn" style="justify-content:flex-start; padding:0; margin-top:6px;">删除</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>按岗位名称搜索</h3>
+                <span class="hint">输入后点击搜索按钮</span>
+              </div>
+              <div class="two-actions">
+                <div class="input">输入岗位名称</div>
+                <button class="secondary-btn">搜索</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>优化后简历</h3>
+                <span class="hint">按时间倒序</span>
+              </div>
+              <button class="record" data-go="detail">
+                <div class="thumb"></div>
+                <div class="record-main">
+                  <strong>高级产品经理</strong>
+                  <p>2026.04.19 · 优化后简历</p>
+                  <span class="tag green">83 分 · 可投递</span>
+                </div>
+                <span class="text-btn">删除</span>
+              </button>
+              <button class="record" data-go="detail">
+                <div class="thumb"></div>
+                <div class="record-main">
+                  <strong>增长产品负责人</strong>
+                  <p>2026.04.17 · 优化后简历</p>
+                  <span class="tag orange">79 分 · 建议优化后投递</span>
+                </div>
+                <span class="text-btn">删除</span>
+              </button>
+            </div>
+
+            <div class="bottom-nav">
+              <button class="nav-tab" data-go="home">首页</button>
+              <button class="nav-tab active" data-go="list">简历列表</button>
+              <button class="nav-tab" data-go="profile">我的</button>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-original-view">
+            <div class="topbar">
+              <button class="icon-btn" data-go="list">‹</button>
+              <h1>原始简历</h1>
+              <button class="text-btn">Word</button>
+            </div>
+
+            <div class="doc-preview">
+              <div class="doc-sheet">
+                <div class="doc-title"></div>
+                <div class="doc-line"></div>
+                <div class="doc-line mid"></div>
+                <div class="doc-line short"></div>
+                <div class="doc-line"></div>
+                <div class="doc-line mid"></div>
+                <div class="doc-line"></div>
+                <div class="doc-line"></div>
+                <div class="doc-line short"></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>文件信息</h3>
+                <span class="hint">只读查看</span>
+              </div>
+              <div class="meta-grid">
+                <div class="meta-card">
+                  <b>产品经理原始版</b>
+                  <span>简历名称</span>
+                </div>
+                <div class="meta-card">
+                  <b>2026.04.10</b>
+                  <span>上传时间</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="sticky-actions">
+              <button class="secondary-btn">导出 PDF</button>
+              <button class="primary-btn">导出 Word</button>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-detail">
+            <div class="topbar">
+              <button class="icon-btn" data-go="list">‹</button>
+              <h1>任务详情</h1>
+              <button class="text-btn">删除</button>
+            </div>
+
+            <div class="hero">
+              <span class="eyebrow">高级产品经理</span>
+              <h2>从 61 分提升到 83 分</h2>
+              <p>重点加强了增长结果、管理跨度与跨团队推进经验，优化后已达到可投递标准。</p>
+            </div>
+
+            <div class="metric-row">
+              <div class="metric-card">
+                <b>61</b>
+                <span>优化前分数</span>
+              </div>
+              <div class="metric-card">
+                <b>83</b>
+                <span>优化后分数</span>
+              </div>
+              <div class="metric-card">
+                <b>可投递</b>
+                <span>当前结论</span>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>岗位 JD 概要</h3>
+                <span class="hint">本次优化目标</span>
+              </div>
+              <div class="muted-box">
+                负责产品策略制定与项目推进，要求具备跨部门协同能力、业务增长意识、数据分析能力和复杂项目独立推进经验。
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>简历快照</h3>
+                <span class="hint">点击进入详情</span>
+              </div>
+              <div class="card-sub">这个页面只放结果概览。查看全文和差异对比，请进入简历查看页。</div>
+              <div class="split">
+                <button class="thumb" style="width:100%; height:132px;" data-go="resume-view"></button>
+                <button class="thumb" style="width:100%; height:132px;" data-go="resume-view"></button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>本次优化点</h3>
+                <span class="hint">3 条核心提升</span>
+              </div>
+              <div class="list-row">
+                <div>
+                  <strong>突出增长结果</strong>
+                  <span>补充付费转化率、会员留存等核心数据</span>
+                </div>
+              </div>
+              <div class="list-row">
+                <div>
+                  <strong>强调管理跨度</strong>
+                  <span>增加带团队人数、跨部门协同范围</span>
+                </div>
+              </div>
+              <div class="list-row">
+                <div>
+                  <strong>加强 ATS 关键词</strong>
+                  <span>前置策略、增长、业务拆解等岗位高频词</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>可执行操作</h3>
+                <span class="hint">详情页聚合所有动作</span>
+              </div>
+              <div class="quick-grid">
+                <div class="quick-item">
+                  <strong>导出 Word</strong>
+                  <span>导出可继续编辑的简历文件</span>
+                </div>
+                <div class="quick-item">
+                  <strong>导出 PDF</strong>
+                  <span>导出可直接投递的简历文件</span>
+                </div>
+                <div class="quick-item">
+                  <strong>重新优化</strong>
+                  <span>补充新信息或新要求后再生成</span>
+                </div>
+                <div class="quick-item">
+                  <strong>更换模型重跑</strong>
+                  <span>切换模型重新生成，重新扣分</span>
+                </div>
+                <div class="quick-item">
+                  <strong>去做格式对齐</strong>
+                  <span>在内容确认后继续还原原简历版式</span>
+                </div>
+                <div class="quick-item">
+                  <strong>删除该记录</strong>
+                  <span>删除前会进行二次确认</span>
+                </div>
+              </div>
+              <div class="notice">
+                <strong>删除说明</strong>
+                <p>删除该记录时需二次确认，仅删除当前历史记录，不影响原始简历和其他历史记录。</p>
+              </div>
+            </div>
+
+            <div class="sticky-actions">
+              <button class="secondary-btn">继续优化这条记录</button>
+              <button class="primary-btn" data-go="resume-view">查看优化前后简历</button>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-resume-view">
+            <div class="topbar">
+              <button class="icon-btn" data-go="detail">‹</button>
+              <h1>简历查看</h1>
+              <button class="text-btn">导出</button>
+            </div>
+
+            <div class="segmented-3" data-tabs="resume-mode">
+              <button class="active" data-tab-target="resume-before">优化前简历</button>
+              <button data-tab-target="resume-after">优化后简历</button>
+              <button data-tab-target="resume-diff">差异对比</button>
+            </div>
+
+            <div class="tab-panel active" id="resume-before">
+              <div class="doc-preview">
+                <div class="doc-sheet">
+                  <div class="doc-title"></div>
+                  <div class="doc-line"></div>
+                  <div class="doc-line"></div>
+                  <div class="doc-line mid"></div>
+                  <div class="doc-line short"></div>
+                  <div class="doc-line"></div>
+                  <div class="doc-line"></div>
+                  <div class="doc-line mid"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-panel" id="resume-after">
+              <div class="doc-preview">
+                <div class="doc-sheet">
+                  <div class="doc-title"></div>
+                  <div class="doc-line"></div>
+                  <div class="doc-line mid"></div>
+                  <div class="doc-line short"></div>
+                  <div class="doc-line"></div>
+                  <div class="doc-line mid"></div>
+                  <div class="doc-line"></div>
+                  <div class="doc-line short"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-panel" id="resume-diff">
+              <div class="card">
+                <div class="card-header">
+                  <h3>差异对比</h3>
+                  <span class="hint">按模块展示</span>
+                </div>
+                <div class="list-row">
+                  <div>
+                    <strong>工作经历</strong>
+                    <span>新增了业务指标结果和跨团队推进范围</span>
+                  </div>
+                </div>
+                <div class="list-row">
+                  <div>
+                    <strong>项目经历</strong>
+                    <span>补足项目目标、职责边界和量化成果</span>
+                  </div>
+                </div>
+                <div class="list-row">
+                  <div>
+                    <strong>技能总结</strong>
+                    <span>补充岗位相关关键词，提升 ATS 识别率</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sticky-actions">
+              <button class="secondary-btn">导出 Word</button>
+              <button class="primary-btn">导出 PDF</button>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-profile">
+            <div class="topbar">
+              <button class="icon-btn">☻</button>
+              <h1>我的</h1>
+              <button class="text-btn" data-go="billing">积分充值</button>
+            </div>
+
+            <div class="member-card">
+              <div class="member-head">
+                <div class="member-user">
+                  <div class="avatar"></div>
+                  <div>
+                    <strong style="display:block; font-size:18px;">LJH</strong>
+                    <span class="hint">年会员 · 2027.04.19 到期</span>
+                  </div>
+                </div>
+                <button class="text-btn" data-go="billing">会员开通</button>
+              </div>
+              <div class="metric-card" style="background: var(--card-soft);">
+                <b>1,280</b>
+                <span>当前积分余额</span>
+              </div>
+              <div class="stats">
+                <div class="stat">
+                  <strong>3</strong>
+                  <span>原始简历</span>
+                </div>
+                <div class="stat">
+                  <strong>18</strong>
+                  <span>优化简历</span>
+                </div>
+                <div class="stat">
+                  <strong>26</strong>
+                  <span>优化任务</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="sheet-list">
+                <button class="sheet-item" data-go="orders">
+                  <strong>订单记录</strong>
+                  <span>查看会员开通与积分充值订单</span>
+                </button>
+                <button class="sheet-item" data-go="points">
+                  <strong>积分明细</strong>
+                  <span>查看积分收入与消耗明细</span>
+                </button>
+                <button class="sheet-item" data-go="feedback">
+                  <strong>问题反馈</strong>
+                  <span>提交截图、描述问题并留下联系方式</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="bottom-nav">
+              <button class="nav-tab" data-go="home">首页</button>
+              <button class="nav-tab" data-go="list">简历列表</button>
+              <button class="nav-tab active" data-go="profile">我的</button>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-orders">
+            <div class="topbar">
+              <button class="icon-btn" data-go="profile">‹</button>
+              <h1>订单记录</h1>
+              <button class="text-btn">全部</button>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>充值购买订单</h3>
+                <span class="hint">会员开通 + 积分充值</span>
+              </div>
+              <div class="list-row">
+                <div>
+                  <strong>年会员开通订单</strong>
+                  <span>2026.04.19 · 支付金额 ¥298</span>
+                </div>
+                <span class="tag green">已支付</span>
+              </div>
+              <div class="list-row">
+                <div>
+                  <strong>积分充值订单</strong>
+                  <span>2026.04.12 · 1280 积分 · ¥128</span>
+                </div>
+                <span class="tag green">已支付</span>
+              </div>
+              <div class="list-row">
+                <div>
+                  <strong>积分充值订单</strong>
+                  <span>2026.04.02 · 300 积分 · ¥30</span>
+                </div>
+                <span class="tag green">已支付</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-points">
+            <div class="topbar">
+              <button class="icon-btn" data-go="profile">‹</button>
+              <h1>积分明细</h1>
+              <button class="text-btn">余额 1280</button>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>积分变动记录</h3>
+                <span class="hint">按时间倒序</span>
+              </div>
+              <div class="list-row">
+                <div>
+                  <strong>2026.04.20 14:26</strong>
+                  <span>更换模型重跑扣分 · 使用 GPT 5.4 重新优化“高级产品经理”</span>
+                </div>
+                <div style="text-align:right;">
+                  <strong>-180</strong>
+                  <span>余额 1280</span>
+                </div>
+              </div>
+              <div class="list-row">
+                <div>
+                  <strong>2026.04.19 21:18</strong>
+                  <span>会员赠送积分 · 年会员开通赠送</span>
+                </div>
+                <div style="text-align:right;">
+                  <strong>+1200</strong>
+                  <span>余额 1460</span>
+                </div>
+              </div>
+              <div class="list-row">
+                <div>
+                  <strong>2026.04.17 09:11</strong>
+                  <span>简历优化扣分 · 使用国产模型优化“增长产品负责人”</span>
+                </div>
+                <div style="text-align:right;">
+                  <strong>-120</strong>
+                  <span>余额 260</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-feedback">
+            <div class="topbar">
+              <button class="icon-btn" data-go="profile">‹</button>
+              <h1>问题反馈</h1>
+              <button class="text-btn">提交</button>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>反馈内容</h3>
+                <span class="hint">第一版暂不提供在线客服</span>
+              </div>
+              <div class="field">
+                <label>问题描述</label>
+                <div class="textarea">请描述你遇到的问题，例如解析失败、格式异常、扣费疑问、导出异常等。</div>
+              </div>
+              <div class="field">
+                <label>上传截图</label>
+                <div class="picker-row">
+                  <span class="pill">上传截图 1</span>
+                  <span class="pill">上传截图 2</span>
+                  <span class="pill">继续添加</span>
+                </div>
+              </div>
+              <div class="field">
+                <label>联系方式</label>
+                <div class="input">请输入微信号 / 手机号 / 邮箱，便于后续联系</div>
+              </div>
+            </div>
+
+            <div class="sticky-actions">
+              <button class="primary-btn">提交反馈</button>
+            </div>
+          </section>
+
+          <section class="screen" id="screen-billing">
+            <div class="topbar">
+              <button class="icon-btn" data-go="profile">‹</button>
+              <h1>会员与充值</h1>
+              <button class="text-btn">说明</button>
+            </div>
+
+            <div class="segmented" data-tabs="billing-mode">
+              <button class="active" data-tab-target="billing-member">会员开通</button>
+              <button data-tab-target="billing-points">积分充值</button>
+            </div>
+
+            <div class="tab-panel active" id="billing-member">
+              <div class="card">
+                <div class="card-header">
+                  <h3>当前会员状态</h3>
+                  <span class="hint">从不同入口进入时默认页签不同</span>
+                </div>
+                <div class="meta-grid">
+                  <div class="meta-card">
+                    <b>年会员</b>
+                    <span>当前会员类型</span>
+                  </div>
+                  <div class="meta-card">
+                    <b>2027.04.19</b>
+                    <span>会员到期时间</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header">
+                  <h3>选择会员</h3>
+                  <span class="hint">会员为主，积分充值为辅</span>
+                </div>
+                <div class="sheet-list">
+                  <div class="sheet-item">
+                    <strong>月会员 · ￥39</strong>
+                    <span>积分 8.5 折 · 开通即赠积分</span>
+                  </div>
+                  <div class="sheet-item" style="background:#f7fbff; border-color:#d6e7ff;">
+                    <strong>季会员 · ￥98</strong>
+                    <span>积分 8 折 · 性价比更优</span>
+                  </div>
+                  <div class="sheet-item">
+                    <strong>年会员 · ￥298</strong>
+                    <span>积分 7.5 折 · 长期求职更合适</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-panel" id="billing-points">
+              <div class="card">
+                <div class="card-header">
+                  <h3>积分充值</h3>
+                  <span class="hint">1 元 = 10 积分</span>
+                </div>
+                <div class="sheet-list">
+                  <div class="sheet-item"><strong>6 元</strong><span>60 积分</span></div>
+                  <div class="sheet-item"><strong>12 元</strong><span>120 积分</span></div>
+                  <div class="sheet-item"><strong>30 元</strong><span>300 积分</span></div>
+                  <div class="sheet-item"><strong>68 元</strong><span>680 积分</span></div>
+                  <div class="sheet-item"><strong>128 元</strong><span>1280 积分</span></div>
+                  <div class="sheet-item"><strong>328 元</strong><span>3280 积分</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="sticky-actions">
+              <div class="two-actions">
+                <button class="secondary-btn">立即充值</button>
+                <button class="primary-btn">立即开通</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const screens = document.querySelectorAll(".screen");
+
+      function showScreen(id) {
+        screens.forEach((screen) => {
+          screen.classList.toggle("active", screen.id === `screen-${id}`);
+        });
+      }
+
+      document.addEventListener("click", (event) => {
+        const goTarget = event.target.closest("[data-go]");
+        if (goTarget) {
+          event.preventDefault();
+          showScreen(goTarget.dataset.go);
+          return;
+        }
+
+        const tabBtn = event.target.closest("[data-tab-target]");
+        if (tabBtn) {
+          event.preventDefault();
+          const tabsWrap = tabBtn.parentElement;
+          const screen = tabBtn.closest(".screen");
+          const targets = [...tabsWrap.querySelectorAll("[data-tab-target]")].map(
+            (btn) => btn.dataset.tabTarget
+          );
+
+          tabsWrap.querySelectorAll("[data-tab-target]").forEach((btn) => {
+            btn.classList.toggle("active", btn === tabBtn);
+          });
+
+          targets.forEach((targetId) => {
+            const panel = screen.querySelector(`#${targetId}`);
+            if (panel) {
+              panel.classList.toggle("active", targetId === tabBtn.dataset.tabTarget);
+            }
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
