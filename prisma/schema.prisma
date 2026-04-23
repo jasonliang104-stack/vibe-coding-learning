@@ -1,0 +1,827 @@
+// Prisma Schema Draft
+// 基于《数据库表设计初稿》整理，覆盖第一版核心业务表与关键枚举。
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+  DELETED
+}
+
+enum LoginType {
+  WECHAT_MINI_PROGRAM
+}
+
+enum ResumeType {
+  ORIGINAL
+  OPTIMIZED
+}
+
+enum ResumeSourceType {
+  TEXT
+  WORD
+  TASK_GENERATED
+}
+
+enum ResumeStatus {
+  DRAFT
+  AVAILABLE
+  GENERATING
+  FAILED
+  DELETED
+}
+
+enum JdInputType {
+  TEXT
+  IMAGE
+}
+
+enum JdStatus {
+  CREATED
+  PROCESSING
+  AVAILABLE
+  FAILED
+  EXPIRED
+  DELETED
+}
+
+enum JdStructureStatus {
+  PROCESSING
+  AVAILABLE
+  FAILED
+  DELETED
+}
+
+enum TaskType {
+  DIAGNOSIS
+  OPTIMIZATION
+  FORMAT_ALIGNMENT
+  RETRY
+}
+
+enum TaskStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum TaskStepStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  SKIPPED
+}
+
+enum TaskInputType {
+  JD_RECORD
+  RESUME_VERSION
+  USER_REQUIREMENT
+  SUPPLEMENT_ANSWER
+  MODEL_SELECTION
+  SNAPSHOT
+}
+
+enum TaskFailureReasonType {
+  INPUT_INVALID
+  FILE_PARSE_FAILED
+  JD_EXTRACT_FAILED
+  MODEL_CALL_FAILED
+  MODEL_TIMEOUT
+  INSUFFICIENT_POINTS
+  SYSTEM_ERROR
+  USER_CANCELLED
+  UNKNOWN
+}
+
+enum TaskResultType {
+  DIAGNOSIS
+  OPTIMIZATION
+  FORMAT_ALIGNMENT
+}
+
+enum TaskResultStatus {
+  GENERATING
+  AVAILABLE
+  FAILED
+  DELETED
+}
+
+enum ResultConclusionLabel {
+  CAN_APPLY
+  OPTIMIZE_BEFORE_APPLY
+  HIGH_RISK
+}
+
+enum ModelPriorityType {
+  SPEED
+  QUALITY
+}
+
+enum ModelConfigStatus {
+  ACTIVE
+  INACTIVE
+  TESTING
+  DEPRECATED
+}
+
+enum ModelCallStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+  RETRYING
+  CANCELLED
+}
+
+enum PointTransactionType {
+  NEW_USER_BONUS
+  TASK_DIAGNOSIS_CONSUME
+  TASK_RETRY_CONSUME
+  MEMBERSHIP_BONUS
+  POINT_RECHARGE
+  VIDEO_REWARD
+  TASK_FAIL_REFUND
+  MANUAL_ADJUST
+  REFUND_RETURN
+}
+
+enum PointTransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REVERSED
+}
+
+enum MembershipPlanDuration {
+  MONTH
+  QUARTER
+  YEAR
+}
+
+enum MembershipPlanStatus {
+  ACTIVE
+  INACTIVE
+  DEPRECATED
+}
+
+enum MembershipStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  REFUNDED
+}
+
+enum RewardType {
+  VIDEO_AD
+}
+
+enum RewardEventStatus {
+  INIT
+  WATCHING
+  COMPLETED
+  CLAIMED
+  FAILED
+  CANCELLED
+  EXPIRED
+}
+
+enum OrderType {
+  POINT_RECHARGE
+  MEMBERSHIP
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CLOSED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentChannel {
+  WECHAT_PAY
+}
+
+enum PaymentStatus {
+  INIT
+  PROCESSING
+  SUCCESS
+  FAILED
+  CLOSED
+}
+
+enum FileType {
+  JD_IMAGE
+  RESUME_WORD
+  RESUME_WORD_OPTIMIZED
+  EXPORT_WORD
+  EXPORT_PDF
+  FEEDBACK_IMAGE
+  TEMP_FILE
+}
+
+enum BizType {
+  JD
+  RESUME
+  TASK
+  RESULT
+  FEEDBACK
+  TEMP
+}
+
+enum FileStatus {
+  UPLOADING
+  UPLOADED
+  PROCESSING
+  AVAILABLE
+  FAILED
+  DELETING
+  DELETED
+}
+
+enum FileRelationType {
+  RESUME
+  RESUME_VERSION
+  JD_RECORD
+  TASK
+  TASK_RESULT
+  FEEDBACK
+}
+
+enum DownloadType {
+  WORD
+  PDF
+}
+
+enum DownloadStatus {
+  INIT
+  URL_GENERATED
+  DOWNLOADING
+  SUCCEEDED
+  FAILED
+  EXPIRED
+}
+
+model User {
+  id               Int                  @id @default(autoincrement())
+  nickname         String?              @map("nickname")
+  avatarUrl        String?              @map("avatar_url")
+  status           UserStatus           @default(ACTIVE) @map("status")
+  lastLoginAt      DateTime?            @map("last_login_at")
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
+
+  loginBindings    UserLoginBinding[]
+  resumes          Resume[]
+  jdRecords        JdRecord[]
+  tasks            Task[]
+  pointAccount     UserPointAccount?
+  pointTransactions PointTransaction[]
+  memberships      UserMembership[]
+  orders           Order[]
+  rewardEvents     RewardEvent[]
+  files            File[]
+  analyticsEvents  AnalyticsEvent[]
+  downloadRecords  DownloadRecord[]
+  paymentTransactions PaymentTransaction[]
+
+  @@map("users")
+}
+
+model UserLoginBinding {
+  id                  Int       @id @default(autoincrement())
+  userId              Int       @map("user_id")
+  loginType           LoginType @map("login_type")
+  openid              String    @unique @map("openid")
+  unionid             String?   @map("unionid")
+  sessionKeyEncrypted String?   @map("session_key_encrypted")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  user                User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, loginType])
+  @@index([userId])
+  @@map("user_login_bindings")
+}
+
+model Resume {
+  id               Int              @id @default(autoincrement())
+  userId           Int              @map("user_id")
+  resumeType       ResumeType       @map("resume_type")
+  title            String           @map("title")
+  sourceType       ResumeSourceType @map("source_type")
+  baseResumeId     Int?             @map("base_resume_id")
+  currentVersionId Int?             @unique @map("current_version_id")
+  status           ResumeStatus     @default(AVAILABLE) @map("status")
+  isDeleted        Boolean          @default(false) @map("is_deleted")
+  deletedAt        DateTime?        @map("deleted_at")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  user             User             @relation(fields: [userId], references: [id])
+  baseResume       Resume?          @relation("ResumeLineage", fields: [baseResumeId], references: [id])
+  derivedResumes   Resume[]         @relation("ResumeLineage")
+  versions         ResumeVersion[]  @relation("ResumeVersions")
+  currentVersion   ResumeVersion?   @relation("ResumeCurrentVersion", fields: [currentVersionId], references: [id])
+  sourceTasks      Task[]           @relation("TaskSourceResume")
+
+  @@index([userId, resumeType])
+  @@index([userId, status])
+  @@index([baseResumeId])
+  @@index([status])
+  @@map("resumes")
+}
+
+model ResumeVersion {
+  id                Int        @id @default(autoincrement())
+  resumeId          Int        @map("resume_id")
+  versionNo         Int        @map("version_no")
+  contentText       String?    @db.LongText @map("content_text")
+  contentStructured Json?      @map("content_structured_json")
+  fileId            Int?       @map("file_id")
+  sourceTaskId      Int?       @map("source_task_id")
+  status            ResumeStatus @default(AVAILABLE) @map("status")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+
+  resume            Resume     @relation("ResumeVersions", fields: [resumeId], references: [id])
+  currentForResume  Resume?    @relation("ResumeCurrentVersion")
+  file              File?      @relation("ResumeVersionFile", fields: [fileId], references: [id])
+  sourceTask        Task?      @relation("GeneratedResumeVersions", fields: [sourceTaskId], references: [id])
+  sourceForTasks    Task[]     @relation("TaskSourceResumeVersion")
+  taskResultVersions TaskResultVersion[] @relation("TaskResultVersionResumeVersion")
+
+  @@unique([resumeId, versionNo])
+  @@index([resumeId])
+  @@index([sourceTaskId])
+  @@map("resume_versions")
+}
+
+model JdRecord {
+  id                Int        @id @default(autoincrement())
+  userId            Int        @map("user_id")
+  inputType         JdInputType @map("input_type")
+  rawText           String?    @db.LongText @map("raw_text")
+  sourceFileId      Int?       @map("source_file_id")
+  retentionExpireAt DateTime?  @map("retention_expire_at")
+  status            JdStatus   @default(CREATED) @map("status")
+  isDeleted         Boolean    @default(false) @map("is_deleted")
+  deletedAt         DateTime?  @map("deleted_at")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+
+  user              User       @relation(fields: [userId], references: [id])
+  sourceFile        File?      @relation("JdRecordSourceFile", fields: [sourceFileId], references: [id])
+  structures        JdStructure[]
+  sourceTasks       Task[]     @relation("TaskSourceJdRecord")
+
+  @@index([userId])
+  @@index([status])
+  @@index([retentionExpireAt])
+  @@map("jd_records")
+}
+
+model JdStructure {
+  id                   Int               @id @default(autoincrement())
+  jdRecordId           Int               @map("jd_record_id")
+  versionNo            Int               @default(1) @map("version_no")
+  jobTitle             String?           @map("job_title")
+  companyName          String?           @map("company_name")
+  jdSummary            String?           @db.Text @map("jd_summary")
+  fullJdText           String            @db.LongText @map("full_jd_text")
+  parsedResult         Json?             @map("parsed_result_json")
+  responsibilities     Json?             @map("responsibilities_json")
+  skills               Json?             @map("skills_json")
+  keywords             Json?             @map("keywords_json")
+  implicitRequirements Json?             @map("implicit_requirements_json")
+  status               JdStructureStatus @default(AVAILABLE) @map("status")
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
+
+  jdRecord             JdRecord          @relation(fields: [jdRecordId], references: [id])
+
+  @@unique([jdRecordId, versionNo])
+  @@index([jdRecordId])
+  @@index([status])
+  @@map("jd_structures")
+}
+
+model Task {
+  id                    Int                    @id @default(autoincrement())
+  userId                Int                    @map("user_id")
+  taskType              TaskType               @map("task_type")
+  sourceResumeId        Int?                   @map("source_resume_id")
+  sourceResumeVersionId Int?                   @map("source_resume_version_id")
+  sourceJdRecordId      Int?                   @map("source_jd_record_id")
+  modelConfigId         Int?                   @map("model_config_id")
+  selectedModelPriorityType ModelPriorityType? @map("selected_model_priority_type")
+  parentTaskId          Int?                   @map("parent_task_id")
+  status                TaskStatus             @default(PENDING) @map("status")
+  statusMessage         String?                @map("status_message")
+  failureReasonType     TaskFailureReasonType? @map("failure_reason_type")
+  failureReason         String?                @db.LongText @map("failure_reason")
+  pointsCost            Int                    @default(0) @map("points_cost")
+  refundedPoints        Int                    @default(0) @map("refunded_points")
+  startedAt             DateTime?              @map("started_at")
+  finishedAt            DateTime?              @map("finished_at")
+  failedAt              DateTime?              @map("failed_at")
+  isDeleted             Boolean                @default(false) @map("is_deleted")
+  deletedAt             DateTime?              @map("deleted_at")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+
+  user                  User                   @relation(fields: [userId], references: [id])
+  sourceResume          Resume?                @relation("TaskSourceResume", fields: [sourceResumeId], references: [id])
+  sourceResumeVersion   ResumeVersion?         @relation("TaskSourceResumeVersion", fields: [sourceResumeVersionId], references: [id])
+  sourceJdRecord        JdRecord?              @relation("TaskSourceJdRecord", fields: [sourceJdRecordId], references: [id])
+  modelConfig           ModelConfig?           @relation("TaskModelConfig", fields: [modelConfigId], references: [id])
+  parentTask            Task?                  @relation("TaskParent", fields: [parentTaskId], references: [id])
+  childTasks            Task[]                 @relation("TaskParent")
+  steps                 TaskStep[]
+  inputs                TaskInput[]
+  results               TaskResult[]
+  modelCallLogs         ModelCallLog[]
+  pointTransactions     PointTransaction[]
+  generatedResumeVersions ResumeVersion[]      @relation("GeneratedResumeVersions")
+
+  @@index([userId, taskType])
+  @@index([status])
+  @@index([sourceResumeId])
+  @@index([sourceJdRecordId])
+  @@index([modelConfigId])
+  @@index([parentTaskId])
+  @@map("tasks")
+}
+
+model TaskStep {
+  id            Int            @id @default(autoincrement())
+  taskId        Int            @map("task_id")
+  stepCode      String         @map("step_code")
+  stepName      String         @map("step_name")
+  stepOrder     Int            @map("step_order")
+  status        TaskStepStatus @default(PENDING) @map("status")
+  statusMessage String?        @map("status_message")
+  startedAt     DateTime?      @map("started_at")
+  finishedAt    DateTime?      @map("finished_at")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  task          Task           @relation(fields: [taskId], references: [id])
+  modelCallLogs ModelCallLog[]
+
+  @@index([taskId, stepOrder])
+  @@index([status])
+  @@map("task_steps")
+}
+
+model TaskInput {
+  id            Int           @id @default(autoincrement())
+  taskId         Int           @map("task_id")
+  inputType      TaskInputType @map("input_type")
+  inputSummary   String?       @db.Text @map("input_summary")
+  inputSnapshot  Json          @map("input_snapshot_json")
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  task           Task          @relation(fields: [taskId], references: [id])
+
+  @@index([taskId, inputType])
+  @@index([taskId])
+  @@map("task_inputs")
+}
+
+model TaskResult {
+  id               Int                   @id @default(autoincrement())
+  taskId            Int                   @map("task_id")
+  resultType        TaskResultType        @map("result_type")
+  currentVersionId  Int?                  @unique @map("current_version_id")
+  status            TaskResultStatus      @default(GENERATING) @map("status")
+  scoreBefore       Int?                  @map("score_before")
+  scoreAfter        Int?                  @map("score_after")
+  conclusionLabel   ResultConclusionLabel? @map("conclusion_label")
+  createdAt         DateTime              @default(now()) @map("created_at")
+  updatedAt         DateTime              @updatedAt @map("updated_at")
+
+  task              Task                  @relation(fields: [taskId], references: [id])
+  versions          TaskResultVersion[] @relation("TaskResultVersions")
+  currentVersion    TaskResultVersion?  @relation("TaskResultCurrentVersion", fields: [currentVersionId], references: [id])
+
+  @@unique([taskId, resultType])
+  @@index([status])
+  @@index([taskId])
+  @@map("task_results")
+}
+
+model TaskResultVersion {
+  id                  Int        @id @default(autoincrement())
+  taskResultId        Int        @map("task_result_id")
+  versionNo           Int        @map("version_no")
+  resumeVersionId     Int?       @map("resume_version_id")
+  diagnosis           Json?      @map("diagnosis_json")
+  optimizationSummary Json?      @map("optimization_summary_json")
+  resultContent       Json?      @map("result_content_json")
+  scoreBefore         Int?       @map("score_before")
+  scoreAfter          Int?       @map("score_after")
+  conclusionLabel     ResultConclusionLabel? @map("conclusion_label")
+  createdAt           DateTime   @default(now()) @map("created_at")
+
+  taskResult          TaskResult    @relation("TaskResultVersions", fields: [taskResultId], references: [id])
+  currentForResult    TaskResult?   @relation("TaskResultCurrentVersion")
+  resumeVersion       ResumeVersion? @relation("TaskResultVersionResumeVersion", fields: [resumeVersionId], references: [id])
+
+  @@unique([taskResultId, versionNo])
+  @@index([resumeVersionId])
+  @@index([taskResultId])
+  @@map("task_result_versions")
+}
+
+model ModelConfig {
+  id             Int               @id @default(autoincrement())
+  modelCode      String            @unique @map("model_code")
+  displayName    String            @map("display_name")
+  priorityType   ModelPriorityType @map("priority_type")
+  provider       String            @map("provider")
+  description    String?           @db.LongText @map("description")
+  pointCost      Int               @map("point_cost")
+  sortOrder      Int               @default(0) @map("sort_order")
+  isVisible      Boolean           @default(true) @map("is_visible")
+  status         ModelConfigStatus @default(ACTIVE) @map("status")
+  isDefault      Boolean           @default(false) @map("is_default")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  tasks          Task[]            @relation("TaskModelConfig")
+  callLogs       ModelCallLog[]    @relation("ModelCallLogModelConfig")
+
+  @@index([status, priorityType])
+  @@map("model_configs")
+}
+
+model ModelCallLog {
+  id                Int             @id @default(autoincrement())
+  taskId            Int             @map("task_id")
+  taskStepId        Int?            @map("task_step_id")
+  modelConfigId     Int             @map("model_config_id")
+  inputSummary      String?         @db.LongText @map("input_summary")
+  requestPayload    Json?           @map("request_payload_json")
+  responsePayload   Json?           @map("response_payload_json")
+  outputSummary     String?         @db.LongText @map("output_summary")
+  status            ModelCallStatus @default(PENDING) @map("status")
+  failureReason     String?         @db.LongText @map("failure_reason")
+  tokenUsageInput   Int?            @map("token_usage_input")
+  tokenUsageOutput  Int?            @map("token_usage_output")
+  estimatedCost     Decimal?        @db.Decimal(12, 4) @map("estimated_cost")
+  createdAt         DateTime        @default(now()) @map("created_at")
+
+  task              Task            @relation(fields: [taskId], references: [id])
+  taskStep          TaskStep?       @relation(fields: [taskStepId], references: [id])
+  modelConfig       ModelConfig     @relation("ModelCallLogModelConfig", fields: [modelConfigId], references: [id])
+
+  @@index([taskId])
+  @@index([taskStepId])
+  @@index([modelConfigId, status])
+  @@map("model_call_logs")
+}
+
+model UserPointAccount {
+  id                 Int      @id @default(autoincrement())
+  userId             Int      @unique @map("user_id")
+  currentBalance     Int      @default(0) @map("current_balance")
+  totalRechargePoints Int     @default(0) @map("total_recharge_points")
+  totalRewardPoints  Int      @default(0) @map("total_reward_points")
+  totalConsumedPoints Int     @default(0) @map("total_consumed_points")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  user               User     @relation(fields: [userId], references: [id])
+  pointTransactions  PointTransaction[]
+
+  @@map("user_point_accounts")
+}
+
+model PointTransaction {
+  id                  Int                    @id @default(autoincrement())
+  userId              Int                    @map("user_id")
+  accountId           Int                    @map("account_id")
+  transactionType     PointTransactionType   @map("transaction_type")
+  changeAmount        Int                    @map("change_amount")
+  balanceAfter        Int                    @map("balance_after")
+  relatedTaskId       Int?                   @map("related_task_id")
+  relatedOrderId      Int?                   @map("related_order_id")
+  relatedRewardEventId Int?                  @map("related_reward_event_id")
+  description         String?                @db.LongText @map("description")
+  status              PointTransactionStatus @default(COMPLETED) @map("status")
+  idempotencyKey      String?                @unique @map("idempotency_key")
+  createdAt           DateTime               @default(now()) @map("created_at")
+
+  user                User                   @relation(fields: [userId], references: [id])
+  account             UserPointAccount       @relation(fields: [accountId], references: [id])
+  task                Task?                  @relation(fields: [relatedTaskId], references: [id])
+  order               Order?                 @relation(fields: [relatedOrderId], references: [id])
+  rewardEvent         RewardEvent?           @relation(fields: [relatedRewardEventId], references: [id])
+
+  @@index([userId, transactionType])
+  @@index([accountId])
+  @@index([relatedTaskId])
+  @@index([relatedOrderId])
+  @@index([relatedRewardEventId])
+  @@map("point_transactions")
+}
+
+model MembershipPlan {
+  id            Int                    @id @default(autoincrement())
+  planCode      String                 @unique @map("plan_code")
+  name          String                 @map("name")
+  durationType  MembershipPlanDuration @map("duration_type")
+  priceAmount   Decimal                @db.Decimal(10, 2) @map("price_amount")
+  discountRate  Decimal                @db.Decimal(5, 2) @map("discount_rate")
+  bonusPoints   Int                    @default(0) @map("bonus_points")
+  sortOrder     Int                    @default(0) @map("sort_order")
+  isVisible     Boolean                @default(true) @map("is_visible")
+  status        MembershipPlanStatus   @default(ACTIVE) @map("status")
+  createdAt     DateTime               @default(now()) @map("created_at")
+  updatedAt     DateTime               @updatedAt @map("updated_at")
+
+  userMemberships UserMembership[]
+  orders          Order[]
+
+  @@map("membership_plans")
+}
+
+model UserMembership {
+  id         Int               @id @default(autoincrement())
+  userId     Int               @map("user_id")
+  planId     Int               @map("plan_id")
+  status     MembershipStatus  @default(ACTIVE) @map("status")
+  startedAt  DateTime          @map("started_at")
+  expiredAt  DateTime          @map("expired_at")
+  createdAt  DateTime          @default(now()) @map("created_at")
+  updatedAt  DateTime          @updatedAt @map("updated_at")
+
+  user       User              @relation(fields: [userId], references: [id])
+  plan       MembershipPlan    @relation(fields: [planId], references: [id])
+
+  @@index([userId, status])
+  @@index([planId])
+  @@map("user_memberships")
+}
+
+model RewardEvent {
+  id              Int               @id @default(autoincrement())
+  userId          Int               @map("user_id")
+  rewardType      RewardType        @default(VIDEO_AD) @map("reward_type")
+  rewardPoints    Int               @map("reward_points")
+  status          RewardEventStatus @default(INIT) @map("status")
+  watchStartedAt  DateTime?         @map("watch_started_at")
+  watchCompletedAt DateTime?        @map("watch_completed_at")
+  claimTime       DateTime?         @map("claim_time")
+  dailyLimitDate  DateTime?         @db.Date @map("daily_limit_date")
+  idempotencyKey  String?           @unique @map("idempotency_key")
+  description     String?           @db.LongText @map("description")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  user            User              @relation(fields: [userId], references: [id])
+  pointTransactions PointTransaction[]
+
+  @@index([userId, status])
+  @@index([dailyLimitDate])
+  @@map("reward_events")
+}
+
+model Order {
+  id                  Int            @id @default(autoincrement())
+  userId              Int            @map("user_id")
+  orderNo             String         @unique @map("order_no")
+  orderType           OrderType      @map("order_type")
+  relatedPlanId       Int?           @map("related_plan_id")
+  amount              Decimal        @db.Decimal(10, 2) @map("amount")
+  pointAmount         Int?           @map("point_amount")
+  bonusPoints         Int            @default(0) @map("bonus_points")
+  currency            String         @default("CNY") @map("currency")
+  status              OrderStatus    @default(PENDING) @map("status")
+  paidAt              DateTime?      @map("paid_at")
+  expiredAt           DateTime?      @map("expired_at")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+
+  user                User           @relation(fields: [userId], references: [id])
+  plan                MembershipPlan? @relation(fields: [relatedPlanId], references: [id])
+  paymentTransactions PaymentTransaction[]
+  pointTransactions   PointTransaction[]
+
+  @@index([userId, status])
+  @@index([relatedPlanId])
+  @@map("orders")
+}
+
+model PaymentTransaction {
+  id                  Int            @id @default(autoincrement())
+  orderId             Int            @map("order_id")
+  userId              Int            @map("user_id")
+  paymentChannel      PaymentChannel @default(WECHAT_PAY) @map("payment_channel")
+  paymentNo           String?        @unique @map("payment_no")
+  wechatTransactionId String?        @unique @map("wechat_transaction_id")
+  status              PaymentStatus  @default(INIT) @map("status")
+  callbackPayload     Json?          @map("callback_payload_json")
+  callbackAt          DateTime?      @map("callback_at")
+  paidAt              DateTime?      @map("paid_at")
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+
+  order               Order          @relation(fields: [orderId], references: [id])
+  user                User           @relation(fields: [userId], references: [id])
+
+  @@index([orderId, status])
+  @@index([userId])
+  @@map("payment_transactions")
+}
+
+model File {
+  id                  Int             @id @default(autoincrement())
+  userId              Int             @map("user_id")
+  fileType            FileType        @map("file_type")
+  bizType             BizType         @map("biz_type")
+  storageProvider     String          @default("COS") @map("storage_provider")
+  storageBucket       String?         @map("storage_bucket")
+  storageKey          String          @unique @map("storage_key")
+  originalName        String          @map("original_name")
+  mimeType            String?         @map("mime_type")
+  fileSize            Int             @map("file_size")
+  status              FileStatus      @default(UPLOADING) @map("status")
+  isDeleted           Boolean         @default(false) @map("is_deleted")
+  deletedAt           DateTime?       @map("deleted_at")
+  expiredAt           DateTime?       @map("expired_at")
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  user                User            @relation(fields: [userId], references: [id])
+  resumeVersionFiles  ResumeVersion[] @relation("ResumeVersionFile")
+  jdRecordSourceFiles JdRecord[]      @relation("JdRecordSourceFile")
+  relations           FileRelation[]
+  downloadRecords     DownloadRecord[]
+
+  @@index([userId, fileType])
+  @@index([status])
+  @@index([expiredAt])
+  @@map("files")
+}
+
+model FileRelation {
+  id            Int              @id @default(autoincrement())
+  fileId         Int              @map("file_id")
+  relationType   FileRelationType @map("relation_type")
+  relationId     Int              @map("relation_id")
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  file           File             @relation(fields: [fileId], references: [id])
+
+  @@index([fileId])
+  @@index([relationType, relationId])
+  @@map("file_relations")
+}
+
+model DownloadRecord {
+  id           Int            @id @default(autoincrement())
+  userId       Int            @map("user_id")
+  fileId       Int            @map("file_id")
+  downloadType DownloadType   @map("download_type")
+  status       DownloadStatus @default(INIT) @map("status")
+  urlExpiredAt DateTime?      @map("url_expired_at")
+  succeededAt  DateTime?      @map("succeeded_at")
+  failedReason String?        @db.Text @map("failed_reason")
+  createdAt    DateTime       @default(now()) @map("created_at")
+
+  user         User           @relation(fields: [userId], references: [id])
+  file         File           @relation(fields: [fileId], references: [id])
+
+  @@index([userId, downloadType])
+  @@index([fileId])
+  @@map("download_records")
+}
+
+model AnalyticsEvent {
+  id         Int       @id @default(autoincrement())
+  userId      Int?      @map("user_id")
+  eventCode   String    @map("event_code")
+  eventName   String    @map("event_name")
+  pageCode    String    @map("page_code")
+  payload     Json?     @map("payload_json")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user        User?     @relation(fields: [userId], references: [id])
+
+  @@index([userId, eventCode])
+  @@index([pageCode])
+  @@map("analytics_events")
+}
